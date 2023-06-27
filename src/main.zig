@@ -16,7 +16,6 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const alloc = gpa.allocator();
 
-    try test_new_line(alloc);
     try lines_example(alloc);
 }
 
@@ -38,52 +37,6 @@ pub fn fill_triangle(pixels: [*]u32, p_w: u32, p_h: u32, x1: i32, y1: i32, x2: i
     _ = pixels;
 }
 
-fn test_new_line(alloc: std.mem.Allocator) !void {
-    var pixels: [WIDTH * HEIGHT]u32 = undefined;
-
-    const length = pixels.len;
-
-    std.debug.print("{} Pixels allocated\n", .{length});
-
-    m.fill(&pixels, WIDTH, HEIGHT, BACKGROUND_COLOR);
-
-    try new_line(&pixels, WIDTH, HEIGHT, 0, 0, WIDTH, HEIGHT / 2, 0xFFFFFF20);
-
-    try m.save_to_ppm_file(alloc, &pixels, WIDTH, HEIGHT, "lines2.ppm");
-}
-
-fn new_line(pixels: [*]u32, p_w: u32, p_h: u32, x1: i32, y1: i32, x2: i32, y2: i32, color: u32) !void {
-    _ = p_h;
-
-    const dx = try std.math.absInt(x2 - x1);
-    const sx: i32 = if (x1 < x2) 1 else -1;
-
-    const dy = -try std.math.absInt(y2 - y1);
-    const sy: i32 = if (y1 < y2) 1 else -1;
-
-    var e1 = dx + dy;
-    var x = x1;
-    var y = y1;
-
-    std.debug.print("\nValues:\ndx: {}\nsx: {}\ndy: {}\nsy: {}\ne1: {}\n", .{ dx, sx, dy, sy, e1 });
-
-    while (true) {
-        pixels[@as(u32, @intCast(y)) * p_w + @as(u32, @intCast(x))] = color;
-        if (x == x1 and y == y2) break;
-        const e2 = 2 * e1;
-        if (e2 >= dy) {
-            if (x == x2) break;
-            e1 += dy;
-            x += sx;
-        }
-        if (e2 <= dx) {
-            if (y == y2) break;
-            e1 += dx;
-            y += sy;
-        }
-    }
-}
-
 fn lines_example(alloc: std.mem.Allocator) !void {
     var pixels: [WIDTH * HEIGHT]u32 = undefined;
 
@@ -92,11 +45,11 @@ fn lines_example(alloc: std.mem.Allocator) !void {
     std.debug.print("{} Pixels allocated\n", .{length});
 
     m.fill(&pixels, WIDTH, HEIGHT, BACKGROUND_COLOR);
-    try m.draw_line(&pixels, WIDTH, HEIGHT, 0, 0, WIDTH, HEIGHT, 0xFF2020FF);
-    try m.draw_line(&pixels, WIDTH, HEIGHT, 50, HEIGHT / 2, WIDTH / 2, 0, 0xFFFF2020);
-    try m.draw_line(&pixels, WIDTH, HEIGHT, WIDTH, 0, 0, HEIGHT, 0xFF20FF20);
-    try m.draw_line(&pixels, WIDTH, HEIGHT, 0, HEIGHT / 2, WIDTH, HEIGHT / 2, 0xFF20FFFF);
-    try m.draw_line(&pixels, WIDTH, HEIGHT, WIDTH / 2, 0, WIDTH / 2, HEIGHT, 0xFFFFFF20);
+    m.draw_line(&pixels, WIDTH, HEIGHT, 0, 0, WIDTH, HEIGHT, 0xFF2020FF);
+    m.draw_line(&pixels, WIDTH, HEIGHT, 50, HEIGHT / 2, WIDTH / 2, 0, 0xFFFF2020);
+    m.draw_line(&pixels, WIDTH, HEIGHT, WIDTH, 0, 0, HEIGHT, 0xFF20FF20);
+    m.draw_line(&pixels, WIDTH, HEIGHT, 0, HEIGHT / 2, WIDTH, HEIGHT / 2, 0xFF20FFFF);
+    m.draw_line(&pixels, WIDTH, HEIGHT, WIDTH / 2, 0, WIDTH / 2, HEIGHT, 0xFFFFFF20);
 
     try m.save_to_ppm_file(alloc, &pixels, WIDTH, HEIGHT, "lines.ppm");
 }

@@ -80,6 +80,7 @@ pub fn draw_line_og(pixels: [*]u32, p_w: u32, p_h: u32, x1: i32, y1: i32, x2: i3
     // Pretty weird line drawing algo
     // considering switching to :
     // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+    // draw_line now uses a a form of this algorithm
 
     const dx = x2 - x1;
     const dy = y2 - y1;
@@ -124,34 +125,53 @@ pub fn draw_line_og(pixels: [*]u32, p_w: u32, p_h: u32, x1: i32, y1: i32, x2: i3
     }
 }
 
-pub fn draw_line(pixels: [*]u32, p_w: u32, p_h: u32, x1: i32, y1: i32, x2: i32, y2: i32, color: u32) !void {
-    _ = p_h;
-
-    const dx = try std.math.absInt(x2 - x1);
+pub fn draw_line(pixels: [*]u32, p_w: u32, p_h: u32, x1: i32, y1: i32, x2: i32, y2: i32, color: u32) void {
+    const dx = if ((x2 - x1) < 0) x1 - x2 else x2 - x1;
     const sx: i32 = if (x1 < x2) 1 else -1;
 
-    const dy = -try std.math.absInt(y2 - y1);
+    const dy = if ((y2 - y1) < 0) -(y1 - y2) else -(y2 - y1);
     const sy: i32 = if (y1 < y2) 1 else -1;
 
-    var e1 = dx + dy;
-    var x = x1;
-    var y = y1;
+    //std.debug.print("\n\nGiven {}\n Went with {}", .{ (x2 - x1), dx });
+    //std.debug.print("\nGiven {}\n Went with {}\n", .{ (y2 - y1), dy });
 
-    std.debug.print("\nValues:\ndx: {}\nsx: {}\ndy: {}\nsy: {}\ne1: {}\n", .{ dx, sx, dy, sy, e1 });
+    //std.debug.print("\nValues:\n2-1: {}\nsx: {}\n2-1: {}\nsy: {}\n", .{ (x2 - x1), sx, (y2 - y1), sy });
 
-    while (true) {
-        pixels[@as(u32, @intCast(y)) * p_w + @as(u32, @intCast(x))] = color;
-        if (x == x1 and y == y2) break;
-        const e2 = 2 * e1;
-        if (e2 >= dy) {
-            if (x == x2) break;
-            e1 += dy;
-            x += sx;
+    if (dy == 0) {
+        // Case when line is horizontal
+        // below algo breaks in this case
+        const y = y1;
+        if (0 <= y and y < p_h) {
+            const xl = if (x1 < x2) x1 else x2;
+            const xh = if (x1 < x2) x2 else x1;
+
+            var x = xl;
+            while (x <= xh) : (x += 1) {
+                if (0 <= x and x < p_h) {
+                    pixels[@as(u32, @intCast(y)) * p_w + @as(u32, @intCast(x))] = color;
+                }
+            }
         }
-        if (e2 <= dx) {
-            if (y == y2) break;
-            e1 += dx;
-            y += sy;
+    } else {
+        // works for all by horizontal lines
+        var e1 = dx + dy;
+        var x = x1;
+        var y = y1;
+
+        while (true) {
+            pixels[@as(u32, @intCast(y)) * p_w + @as(u32, @intCast(x))] = color;
+            if (x == x1 and y == y2) break;
+            const e2 = 2 * e1;
+            if (e2 >= dy) {
+                if (x == x2) break;
+                e1 += dy;
+                x += sx;
+            }
+            if (e2 <= dx) {
+                if (y == y2) break;
+                e1 += dx;
+                y += sy;
+            }
         }
     }
 }
